@@ -1,0 +1,234 @@
+# Holding CTRL or CMD and tapping A and then ENTER will run the whole script.
+
+# Packages ----------------------------------------------------------------
+
+library(tidyverse)
+library(dplyr)
+library(rvest)
+library(quanteda)
+library(quanteda.textstats)
+library(dabestr)
+library(stringr)
+
+# Data --------------------------------------------------------------------
+
+# Two of the webpages this script uses show some issues when importing to character vectors.
+# These functions clean the character lists of non-UTF8 characters and of leftover HTML tags.
+utf8ify <- function(x){
+  Encoding(x) <- "UTF-8"
+  iconv(x, "UTF-8", "UTF-8",sub='') %>% str_squish(.)
+}
+
+cleantags <- function(htmlString) {
+  return(gsub("<.*?>", "", htmlString))
+}
+
+# These are the fourteen books of Latin poetry by Martial.
+# Import HTML from webpages.
+martial1html <- read_html("https://www.thelatinlibrary.com/martial/mart1.shtml")
+martial2html <- read_html("https://www.thelatinlibrary.com/martial/mart2.shtml")
+martial3html <- read_html("https://www.thelatinlibrary.com/martial/mart3.shtml")
+martial4html <- read_html("https://www.thelatinlibrary.com/martial/mart4.shtml")
+martial5html <- read_html("https://www.thelatinlibrary.com/martial/mart5.shtml")
+martial6html <- read_html("https://www.thelatinlibrary.com/martial/mart6.shtml")
+martial7html <- read_html("https://www.thelatinlibrary.com/martial/mart7.shtml")
+martial8html <- read_html("https://www.thelatinlibrary.com/martial/mart8.shtml")
+martial9html <- read_html("https://www.thelatinlibrary.com/martial/mart9.shtml")
+martial10html <- read_html("https://www.thelatinlibrary.com/martial/mart10.shtml")
+martial11html <- read_html("https://www.thelatinlibrary.com/martial/mart11.shtml")
+martial12html <- read_html("https://www.thelatinlibrary.com/martial/mart12.shtml")
+martial13html <- read_html("https://www.thelatinlibrary.com/martial/mart13.shtml")
+martial14html <- read_html("https://www.thelatinlibrary.com/martial/mart14.shtml")
+
+# Extract elements into character objects.
+book1 <- martial1html %>% html_elements("p") %>% html_text2()
+book2 <- martial2html %>% html_elements("p") %>% html_text2()
+book3 <- martial3html %>% html_elements("p") %>% html_text2()
+book4 <- martial4html %>% html_elements("p") %>% html_text2()
+book5 <- martial5html %>% html_elements("p") %>% html_text2()
+book6 <- martial6html %>% html_elements("p") %>% as.character() %>% utf8ify() %>% cleantags()
+book7 <- martial7html %>% html_elements("p") %>% html_text2()
+book8 <- martial8html %>% html_elements("p") %>% html_text2()
+book9 <- martial9html %>% html_elements("p") %>% html_text2()
+book10 <- martial10html %>% html_elements("p") %>% html_text2()
+book11 <- martial11html %>% html_elements("p") %>% html_text2()
+book12 <- martial12html %>% html_elements("p") %>% html_text2()
+book13 <- martial13html %>% html_elements("p") %>% html_text2()
+book14 <- martial14html %>% html_elements("p") %>% as.character() %>% utf8ify() %>% cleantags()
+
+# Transform the objects into data.frames, which are then filtered of empty and non-alpha rows.
+book1 <- data.frame(c(sapply(book1,t))) %>% 
+  # Rename the column from some weird "c.sapply.book1..t." name to "source."
+  rename(source = c.sapply.book1..t..) %>%
+  # Filter out rows that just don't have anything in them.
+  filter(str_detect(source,"")) %>%
+  # Filter out the rows created by the site title and page footer.
+  slice(-c(241,1:4)) %>%
+  # Filter out the numbers in the rows above every poem.
+  filter(str_detect(source,"[A-Za-z]"))
+
+# Do the same thing to the second webpage.
+book2 <- data.frame(c(sapply(book2,t))) %>% 
+  rename(source = c.sapply.book2..t..) %>%
+  filter(str_detect(source,"")) %>%
+  slice(-c(190,1:3)) %>%
+  filter(str_detect(source,"[A-Za-z]"))
+
+# And the third one, and so forth.
+book3 <- data.frame(c(sapply(book3,t))) %>% 
+  rename(source = c.sapply.book3..t..) %>%
+  filter(str_detect(source,"")) %>%
+  slice(-c(202,1)) %>%
+  filter(str_detect(source,"[A-Za-z]"))
+
+book4 <- data.frame(c(sapply(book4,t))) %>% 
+  rename(source = c.sapply.book4..t..) %>%
+  filter(str_detect(source,"")) %>%
+  slice(-c(180,1)) %>%
+  filter(str_detect(source,"[A-Za-z]"))
+
+book5 <- data.frame(c(sapply(book5,t))) %>% 
+  rename(source = c.sapply.book5..t..) %>%
+  filter(str_detect(source,"")) %>%
+  slice(-c(170,1)) %>%
+  filter(str_detect(source,"[A-Za-z]"))
+
+book6 <- data.frame(c(sapply(book6,t))) %>% 
+  rename(source = c.sapply.book6..t..) %>%
+  filter(str_detect(source,"")) %>%
+  slice(-c(190,1)) %>%
+  filter(str_detect(source,"[A-Za-z]"))
+
+book7 <- data.frame(c(sapply(book7,t))) %>% 
+  rename(source = c.sapply.book7..t..) %>%
+  filter(str_detect(source,"")) %>%
+  slice(-c(200,1)) %>%
+  filter(str_detect(source,"[A-Za-z]"))
+
+book8 <- data.frame(c(sapply(book8,t))) %>% 
+  rename(source = c.sapply.book8..t..) %>%
+  filter(str_detect(source,"")) %>%
+  slice(-c(168,1:3)) %>%
+  filter(str_detect(source,"[A-Za-z]"))
+
+# For Books 9-14, the epigrams are numbered by Roman numerals in the HTML, so 
+# the filter "[A-Za-z]" won't work to remove their rows in the data.frame.
+book9 <- data.frame(c(sapply(book9,t))) %>% 
+  rename(source = c.sapply.book9..t..) %>%
+  filter(str_detect(source,"")) %>%
+  slice(-c(212,1:3)) %>%
+  # Filter by string length; epigram numbers are never longer than 10 chars.
+  filter(str_length(source)>10)
+
+book10 <- data.frame(c(sapply(book10,t))) %>% 
+  rename(source = c.sapply.book10..t..) %>%
+  filter(str_detect(source,"")) %>%
+  slice(-c(210,1)) %>%
+  filter(str_length(source)>10)
+
+book11 <- data.frame(c(sapply(book11,t))) %>% 
+  rename(source = c.sapply.book11..t..) %>%
+  filter(str_detect(source,"")) %>%
+  slice(-c(218,1)) %>%
+  filter(str_length(source)>10)
+
+book12 <- data.frame(c(sapply(book12,t))) %>% 
+  rename(source = c.sapply.book12..t..) %>%
+  filter(str_detect(source,"")) %>%
+  slice(-c(198,1:3)) %>%
+  filter(str_length(source)>10)
+
+book13 <- data.frame(c(sapply(book13,t))) %>% 
+  rename(source = c.sapply.book13..t..) %>%
+  filter(str_detect(source,"")) %>%
+  slice(-c(256,1)) %>%
+  # Epigrams in Book 13 have unique names, all shorter than 27 characters.
+  filter(str_length(source)>27)
+
+book14 <- data.frame(c(sapply(book14,t))) %>% 
+  rename(source = c.sapply.book14..t..) %>%
+  filter(str_detect(source,"")) %>%
+  filter(str_detect(source,"[A-Za-z]")) %>%
+  slice(-c(448,1)) %>%
+  # Epigrams in Book 14 have much longer names, but they're all shorter than 45 characters.
+  filter(str_length(source)>45)
+
+# Martial writes his epigrams in three meters: elegiac couplets, hendecasyllables,
+# and choliambics. I want to see if there's a significant difference in the mean 
+# word syllables of each poetic meter. But, these forms are distinguished in the 
+# HTML only by a regular indentation in all the couplets. To get around this, I 
+# create lists corresponding to each discrete poem for each book.
+
+book1$meter <- c("h","e","e","e","e","e","h","e","e","c","e","e","e","e","e","e","h","e","e","e","e","e","e","e","e","e","h","e","e","e","e","e","e","e","h","e","e","e","e","e","h","e","e","e","e","e","e","e","e","e","e","h","h","h","e","e","e","e","e","e","e","e","e","h","e","h","e","e","h","e","e","h","e","e","e","e","c","e","e","e","e","h","e","c","e","h","e","e","h","e","e","e","e","e","e","c","e","e","h","e","e","h","e","h","e","h","e","e","h","e","e","e","c","e","h","e","h","e")
+book2$meter <- c("e","e","e","h","e","h","e","e","e","e","c","e","h","e","h","e","c","e","e","e","e","e","h","e","e","e","e","e","e","e","e","e","h","e","e","e","h","e","e","e","h","e","e","h","e","e","e","h","e","e","e","e","e","h","h","e","c","e","e","e","e","e","e","e","c","e","e","h","e","h","e","e","c","c","e","e","e","e","e","e","e","e","h","e","e","h","e","e","e","e","e","h","e")
+book3$meter <- c("e","h","e","e","e","e","c","e","e","e","e","h","e","e","e","e","e","e","e","c","e","c","e","e","c","e","e","e","e","e","e","e","e","e","h","e","e","e","e","c","e","e","e","h","e","e","c","e","e","e","e","e","h","e","e","e","e","c","e","e","e","e","e","c","e","e","h","e","e","e","e","e","h","e","e","e","e","e","e","e","e","c","e","h","e","e","e","e","e","e","e","e","c","e","e","h","e","h","e","e")
+book4$meter <- c("e","h","e","h","e","h","e","e","h","e","e","e","e","h","e","e","c","e","e","e","h","e","h","e","e","e","e","h","e","h","e","e","e","e","e","e","c","e","h","e","e","e","h","e","e","h","e","e","e","h","e","e","e","e","h","e","e","e","e","e","c","e","e","h","c","e","e","e","e","c","e","e","e","e","e","e","h","e","e","e","c","e","e","h","e","h","e","e","h")
+book5$meter <- c("e","h","e","c","e","h","e","h","e","e","e","h","e","c","e","e","e","c","e","h","e","e","e","h","e","c","e","c","e","e","e","e","e","e","c","e","c","e","h","e","c","e","e","h","e","e","e","e","h","e","c","e","e","c","e","h","e","e","e","h","e","e","e","e","e","e","e","e","e","h","e","e","h","e","e","e","e","h","e","h","e","e","c","h")
+book6$meter <- c("h","e","e","h","e","e","e","h","e","e","e","c","e","h","e","e","h","e","h","e","e","h","e","h","e","c","e","h","e","h","e","e","e","e","e","e","h","e","c","e","e","h","e","e","e","e","e","e","h","e","e","e","e","e","h","e","e","e","e","e","e","h","e","c","e","h","e","e","e","h","e","h","e","c","e","e","e","h","e","e","e","h","e","e","e","e","e","e","e","h","e","h","e","e")
+book7$meter <- c("e","e","e","h","e","e","c","e","e","e","h","e","e","e","e","e","h","e","e","c","e","e","e","e","e","c","e","e","e","e","h","e","e","h","e","e","e","e","h","e","e","e","e","e","h","e","e","h","e","e","e","e","e","e","h","e","e","e","e","h","e","e","e","e","e","e","h","e","e","h","e","h","e","e","e","h","e","e","h","e","c","e","e","e","e","h","e","e","h","e","e","e","e","e","h","e","h","c","e")
+book8$meter <- c("e","h","e","e","h","e","e","e","e","c","e","e","e","e","e","h","e","e","c","e","e","e","e","e","h","e","e","e","e","e","e","e","e","e","h","e","e","h","e","h","e","h","e","c","e","e","e","e","e","e","e","h","h","e","e","e","e","e","e","e","h","e","e","h","e","h","e","e","h","e","e","h","e","e","e","h","e","e","h","e","h","e")
+book9$meter <- c("c","e","e","e","c","e","e","e","h","e","h","e","e","e","e","e","e","e","h","e","e","e","e","e","e","e","c","e","e","e","e","e","c","e","e","e","e","e","e","h","e","h","e","h","e","e","e","e","e","e","e","h","e","e","e","e","h","e","e","e","e","h","e","e","e","e","e","e","e","e","e","e","e","e","c","e","e","e","e","e","e","e","e","e","e","e","h","e","e","h","e","e","e","e","e","e","e","e","c","e","e","e","e","e")
+book10$meter <- c("e","e","c","e","c","e","h","e","h","e","e","e","e","e","e","e","e","e","e","h","e","c","e","h","e","e","e","e","e","c","e","e","e","e","h","e","e","h","e","h","e","e","e","e","e","e","c","e","h","e","e","h","e","e","h","e","e","e","e","e","e","c","e","e","h","e","h","e","e","e","e","h","e","c","e","h","e","h","e","e","e","e","h","e","e","e","h","e","e","h","e","c","e","e","e","e","e","h","e","c","e","h","e","h")
+book11$meter <- c("h","e","e","e","e","h","e","e","e","e","e","e","h","e","h","e","e","h","e","e","e","e","e","h","e","e","e","e","e","e","h","e","e","e","h","e","e","e","e","h","e","e","e","e","e","e","e","e","e","e","h","e","e","e","e","e","e","e","c","e","c","e","h","e","e","h","e","e","e","e","e","h","e","e","h","e","c","e","e","c","e","e","e","e","e","e","e","h","e","e","e","e","e","e","e","e","e","c","e","c","e","e","e","e","e","h","e","e")
+book12$meter <- c("e","e","e","e","e","h","h","e","c","e","e","c","e","h","h","e","h","e","h","e","h","e","h","e","h","e","e","e","h","e","c","e","h","e","h","h","e","h","e","h","e","h","e","h","e","h","e","h","e","c","e","h","e","h","e","c","e","h","e","h","e","h","c","h","e","h","e","h","e","h","e","h","e","h","e","h","e","h","e","c","e","c","e","h","e","c","e","h","e","h","e","h","e","h","e","h","e")
+book13$meter <- c("e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e")
+book14$meter <- c("e","e","e","e","e","e","e","e","h","e","h","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","h","e","h","h","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","h","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","h","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","h","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e","e")
+
+martialdata <- rbind(book1,book2,book3,book4,book5,book6,book7,book8,book9,book10,book11,book12,book13,book14)
+martialdata[martialdata == "c"] <- "choliambics"
+martialdata[martialdata == "e"] <- "elegiac couplets"
+martialdata[martialdata == "h"] <- "hendecasyllables"
+
+# Experimentation ---------------------------------------------------------
+
+# Maker sure that the poems are all strings and that all line numberings are gone.
+martialdata$source <- as.character(martialdata$source) %>% str_remove("\\d")
+
+# Create a corpus from the data.
+martialcorpus <- martialdata %>% corpus(text_field = "source", unique_docnames = FALSE)
+
+# Tokenize the corpus.
+corpus_tokens <- martialcorpus %>% tokens()
+
+# Create a DFM with the tokens.
+corpus_dfm <- corpus_tokens %>% dfm()
+
+# Calculate TTR, C, R, and K just for good measure. Why not?
+#lexdiv <- textstat_lexdiv(corpus_dfm,measure=c("TTR","C","R","K"))
+
+# Add to the main data.frame.
+#martialdata <- cbind(martialdata,lexdiv)
+
+# Add the calculation for meanWordSyllables to the data.frame. This is the most important metric!
+martialdata <- cbind(martialdata,textstat_readability(martialdata$source,measure = "meanWordSyllables"))
+
+# Remove duplicate columns "document" that are created by the above cbind()s.
+# I don't know why this happens, but it doesn't affect the order of the data.
+martialdata <- martialdata[, !duplicated(colnames(martialdata))]
+
+# Create the dabest objects.
+test1 <- martialdata %>% dabest(x=meter,
+                                       y=meanWordSyllables,
+                                       idx = c("elegiac couplets","hendecasyllables"),
+                                       paired = FALSE)
+test2 <- martialdata %>% dabest(x=meter,
+                                       y=meanWordSyllables,
+                                       idx = c("elegiac couplets","choliambics"),
+                                       paired = FALSE)
+test3 <- martialdata %>% dabest(x=meter,
+                                       y=meanWordSyllables,
+                                       idx = c("elegiac couplets","choliambics"),
+                                       paired = FALSE)
+
+# Run the mean difference calculation.
+test1 %>% mean_diff()
+test1 %>% mean_diff() %>% plot()
+test2 %>% mean_diff()
+test2 %>% mean_diff() %>% plot()
+test3 %>% mean_diff()
+test3 %>% mean_diff() %>% plot()
+
+# Find simple averages, maximums, and minimums.
+group_by(martialdata, meter) %>% summarize(m = mean(meanWordSyllables))
+group_by(martialdata, meter) %>% summarize(m = max(meanWordSyllables))
+group_by(martialdata, meter) %>% summarize(m = min(meanWordSyllables))
